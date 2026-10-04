@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'mridoyfb@gmail.com' ||
+        request.auth.token.email == 'hridoyvaiytbusiness@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && incoming().id == userId
+        && (incoming().role == 'customer' || incoming().role == 'reseller' || (incoming().role == 'admin' && isAdmin()))
+        && incoming().email is string
+        && incoming().email.size() <= 120;
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && incoming().id == userId && incoming().role == existing().role) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Resellers collection
+    match /resellers/{resellerId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid
+        && incoming().status == 'pending'
+        && isValidId(resellerId);
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (existing().userId == request.auth.uid && incoming().userId == request.auth.uid && incoming().status == existing().status)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Products collection (public read, admin write)
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidId(productId);
+    }
+
+    // Categories collection (public read, admin write)
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidId(categoryId);
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.customerId != null && resource.data.customerId == request.auth.uid) ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid)
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.customerId != null && resource.data.customerId == request.auth.uid) ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid)
+      );
+      // Anyone signed in (or placing guest order with auth) can create order
+      allow create: if isValidId(orderId) && incoming().orderNumber is string;
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (existing().customerId == request.auth.uid && existing().orderStatus == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['shippingAddress', 'notes']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Reseller Wallets
+    match /wallets/{walletId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid) ||
+        walletId == request.auth.uid
+      );
+      allow list: if isAdmin();
+      allow create, update: if isSignedIn() && (
+        isAdmin() ||
+        (walletId == request.auth.uid && incoming().resellerId == request.auth.uid)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Transactions ledger
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid)
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid)
+      );
+      allow create: if isSignedIn() && isValidId(transactionId) && (
+        isAdmin() ||
+        (incoming().resellerId == request.auth.uid)
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // Withdrawals
+    match /withdrawals/{withdrawalId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid)
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.resellerId != null && resource.data.resellerId == request.auth.uid)
+      );
+      allow create: if isSignedIn() && isValidId(withdrawalId)
+        && incoming().resellerId == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().amount >= 500;
+      allow update: if isSignedIn() && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Suppliers (admin only)
+    match /suppliers/{supplierId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Coupons
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,260 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile for customer, reseller, or admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "phoneNumber": { "type": "string", "maxLength": 20 },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "reseller", "admin"] },
+        "address": { "type": "string", "maxLength": 300 },
+        "district": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "Reseller": {
+      "title": "Reseller",
+      "description": "Reseller profile, business info and approval status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "resellerCode": { "type": "string", "maxLength": 20 },
+        "shopName": { "type": "string", "maxLength": 100 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email" },
+        "phoneNumber": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
+        "paymentMethod": { "type": "string", "enum": ["bKash", "Nagad"] },
+        "payoutNumber": { "type": "string", "maxLength": 20 },
+        "address": { "type": "string", "maxLength": 300 },
+        "totalSales": { "type": "number" },
+        "totalOrders": { "type": "number" },
+        "totalEarnings": { "type": "number" },
+        "availableBalance": { "type": "number" },
+        "pendingEarnings": { "type": "number" },
+        "withdrawnBalance": { "type": "number" },
+        "commissionRate": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "resellerCode", "status"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Catalog item with retail, reseller base price, and commission margins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 200 },
+        "nameBn": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string" },
+        "descriptionBn": { "type": "string" },
+        "category": { "type": "string" },
+        "subCategory": { "type": "string" },
+        "images": { "type": "array" },
+        "regularPrice": { "type": "number" },
+        "salePrice": { "type": "number" },
+        "resellerBasePrice": { "type": "number" },
+        "resellerCommission": { "type": "number" },
+        "stock": { "type": "number" },
+        "sizes": { "type": "array" },
+        "colors": { "type": "array" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "isTrending": { "type": "boolean" },
+        "isBestSeller": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] },
+        "supplierId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "salePrice", "resellerBasePrice", "resellerCommission", "stock"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase with attribution to reseller and commission status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "shippingAddress": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "deliveryCharge": { "type": "number" },
+        "discount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cod", "bkash", "nagad"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "verified", "failed", "refunded"] },
+        "orderStatus": { "type": "string", "enum": ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "returned", "refunded"] },
+        "resellerId": { "type": "string" },
+        "resellerCode": { "type": "string" },
+        "resellerCommission": { "type": "number" },
+        "commissionStatus": { "type": "string", "enum": ["pending", "approved", "reversed", "paid"] },
+        "supplierId": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "orderNumber", "customerName", "customerPhone", "items", "totalAmount", "orderStatus"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "Digital ledger wallet for a reseller",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "resellerId": { "type": "string" },
+        "availableBalance": { "type": "number" },
+        "pendingEarnings": { "type": "number" },
+        "totalEarned": { "type": "number" },
+        "totalWithdrawn": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "resellerId", "availableBalance"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial ledger record of credits, debits, withdrawals, and reversals",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "resellerId": { "type": "string" },
+        "type": { "type": "string", "enum": ["commission_credit", "withdrawal_request", "withdrawal_payment", "refund_reversal", "admin_credit", "admin_debit"] },
+        "amount": { "type": "number" },
+        "previousBalance": { "type": "number" },
+        "newBalance": { "type": "number" },
+        "status": { "type": "string", "enum": ["completed", "pending", "failed", "reversed"] },
+        "description": { "type": "string" },
+        "orderId": { "type": "string" },
+        "withdrawalId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "resellerId", "type", "amount", "newBalance", "status"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "Cash-out payout request via bKash or Nagad",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "resellerId": { "type": "string" },
+        "resellerName": { "type": "string" },
+        "resellerPhone": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["bKash", "Nagad"] },
+        "accountNumber": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "under_review", "approved", "processing", "paid", "rejected"] },
+        "transactionRef": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "resellerId", "paymentMethod", "accountNumber", "amount", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app alerts for users and resellers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["order", "commission", "withdrawal", "announcement"] },
+        "isRead": { "type": "boolean" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "message", "type", "isRead"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Platform settings and configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "websiteName": { "type": "string" },
+        "tagline": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "deliveryChargeInsideDhaka": { "type": "number" },
+        "deliveryChargeOutsideDhaka": { "type": "number" },
+        "minWithdrawalAmount": { "type": "number" },
+        "defaultCommissionPercent": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Dropshipping supplier partner",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "productsCount": { "type": "number" },
+        "rating": { "type": "number" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "name", "phone", "active"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles for customers, resellers, and admins"
+    },
+    "/resellers/{resellerId}": {
+      "schema": { "$ref": "#/entities/Reseller" },
+      "description": "Reseller business profiles and status"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Catalog products with regular and reseller margins"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Store orders and dropshipping commission records"
+    },
+    "/wallets/{walletId}": {
+      "schema": { "$ref": "#/entities/Wallet" },
+      "description": "Digital ledger wallets for approved resellers"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Financial ledger transactions"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": { "$ref": "#/entities/Withdrawal" },
+      "description": "bKash & Nagad withdrawal requests"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "User and reseller notifications"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Store configuration and business parameters"
+    },
+    "/suppliers/{supplierId}": {
+      "schema": { "$ref": "#/entities/Supplier" },
+      "description": "Dropshipping suppliers list"
+    }
+  }
+}

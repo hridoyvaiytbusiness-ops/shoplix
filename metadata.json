@@ -1,0 +1,6 @@
+{
+  "name": "SHOPLIX — Reselling & Dropshipping E-Commerce Platform",
+  "description": "SHOPLIX is Bangladesh's premier e-commerce and reselling platform. Shop smart, sell more, and earn commissions with bKash/Nagad withdrawals and dropshipping fulfillment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
